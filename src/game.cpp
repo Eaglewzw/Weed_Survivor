@@ -1,9 +1,9 @@
 #include <Arduino.h>
-#include "game.h"
-#include "utils.h"
-#include "audio.h"
-#include "player.h"
-#include "enemy.h"
+#include "src/game.h"
+#include "src/utils.h"
+#include "src/audio.h"
+#include "src/player.h"
+#include "src/enemy.h"
 
 // ==================== 投射物槽位 ====================
 int findFreeProjectileSlot() {

@@ -2,7 +2,7 @@
 #define TYPES_H
 
 #include <TFT_eSPI.h>
-#include "config.h"
+#include "src/config.h"
 
 // ==================== 敌人类型 ====================
 enum EnemyType {

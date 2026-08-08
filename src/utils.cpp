@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "utils.h"
+#include "src/utils.h"
 
 // ==================== RNG (LCG) ====================
 uint32_t rngNext() {

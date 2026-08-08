@@ -4,14 +4,14 @@
  * 320x240 LCD，五向摇杆移动，按钮选择升级
  */
 
-#include "globals.h"
-#include "utils.h"
-#include "audio.h"
-#include "player.h"
-#include "enemy.h"
-#include "game.h"
-#include "render.h"
-#include "ui.h"
+#include "src/globals.h"
+#include "src/utils.h"
+#include "src/audio.h"
+#include "src/player.h"
+#include "src/enemy.h"
+#include "src/game.h"
+#include "src/render.h"
+#include "src/ui.h"
 
 // ==================== Arduino Setup ====================
 void setup() {

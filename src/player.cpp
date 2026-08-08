@@ -1,8 +1,8 @@
 #include <Arduino.h>
-#include "player.h"
-#include "utils.h"
-#include "audio.h"
-#include "enemy.h"
+#include "src/player.h"
+#include "src/utils.h"
+#include "src/audio.h"
+#include "src/enemy.h"
 
 // ==================== 玩家初始化 ====================
 void initPlayer() {

@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "globals.h"
+#include "src/globals.h"
 
 // ==================== RNG ====================
 uint32_t rngNext();

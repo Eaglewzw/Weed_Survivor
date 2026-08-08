@@ -1,7 +1,7 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-#include "globals.h"
+#include "src/globals.h"
 
 // ==================== 世界实体绘制 ====================
 void drawBackground();

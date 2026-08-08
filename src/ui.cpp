@@ -1,8 +1,8 @@
 #include <Arduino.h>
-#include "ui.h"
-#include "utils.h"
-#include "player.h"
-#include "enemy.h"
+#include "src/ui.h"
+#include "src/utils.h"
+#include "src/player.h"
+#include "src/enemy.h"
 
 // ==================== 主UI栏 ====================
 void drawUI() {
