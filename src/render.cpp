@@ -1,7 +1,7 @@
 #include <Arduino.h>
-#include "src/render.h"
-#include "src/utils.h"
-#include "src/player.h"
+#include "render.h"
+#include "utils.h"
+#include "player.h"
 
 // ==================== 背景 ====================
 void drawBackground() {

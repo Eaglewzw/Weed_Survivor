@@ -1,4 +1,4 @@
-#include "src/audio.h"
+#include "audio.h"
 
 static unsigned long beepEndTime = 0;
 

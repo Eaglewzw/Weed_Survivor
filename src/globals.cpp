@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "src/globals.h"
+#include "globals.h"
 
 // ==================== 硬件对象 ====================
 TFT_eSPI tft;

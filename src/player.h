@@ -1,7 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "src/globals.h"
+#include "globals.h"
 
 // ==================== 玩家 ====================
 void initPlayer();

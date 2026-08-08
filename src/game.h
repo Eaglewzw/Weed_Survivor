@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "src/globals.h"
+#include "globals.h"
 
 // ==================== 主更新 ====================
 void updateGame(float dt);

@@ -1,7 +1,7 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-#include "src/globals.h"
+#include "globals.h"
 
 // ==================== 敌人槽位 ====================
 int findFreeEnemySlot();

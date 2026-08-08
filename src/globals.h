@@ -1,7 +1,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include "src/types.h"
+#include "types.h"
 
 // ==================== 硬件对象 ====================
 extern TFT_eSPI tft;

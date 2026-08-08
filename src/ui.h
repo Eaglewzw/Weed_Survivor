@@ -1,7 +1,7 @@
 #ifndef UI_H
 #define UI_H
 
-#include "src/globals.h"
+#include "globals.h"
 
 void drawUI();
 void drawUpgradePanel();
