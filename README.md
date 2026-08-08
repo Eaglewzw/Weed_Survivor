@@ -3,7 +3,7 @@
 > 一款运行在 **Wio Terminal** 上的吸血鬼幸存者风格割草游戏。320×240 彩色屏幕，< 100KB 固件，满屏 120 只怪物流畅运行，用最小的硬件、最少的代码，做出最爽的割草体验。
 
 <p align="center">
-  <img src="view.png" width="80%" />
+  <img src="docs/view.png" width="80%" />
 </p>
 
 ## 游戏特性
