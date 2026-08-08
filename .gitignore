@@ -11,6 +11,9 @@ build-*/
 *.jpg
 *.bmp
 
+# 允许 README 截图
+!docs/view.png
+
 # IDE
 .vscode/
 .idea/
