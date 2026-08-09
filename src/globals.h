@@ -37,6 +37,7 @@ extern float screenShake;
 extern int shakeX, shakeY;
 extern bool gameOver;
 extern bool paused;
+extern bool inMenu;
 extern unsigned long screenEnterTime;
 
 extern UpgradeOption upgradeOptions[3];

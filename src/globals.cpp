@@ -35,6 +35,7 @@ float screenShake = 0;
 int shakeX = 0, shakeY = 0;
 bool gameOver = false;
 bool paused = false;
+bool inMenu = true;
 unsigned long screenEnterTime = 0;
 
 UpgradeOption upgradeOptions[3];

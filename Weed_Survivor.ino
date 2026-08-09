@@ -13,48 +13,8 @@
 #include "src/render.h"
 #include "src/ui.h"
 
-// ==================== Arduino Setup ====================
-void setup() {
-  // 背光
-  pinMode(LCD_BACKLIGHT, OUTPUT);
-  digitalWrite(LCD_BACKLIGHT, HIGH);
-
-  // 初始化屏幕
-  tft.begin();
-  tft.setRotation(3);
-  tft.fillScreen(TFT_BLACK);
-  gameSpr.createSprite(SW, SH);
-
-  // 初始化按钮
-  pinMode(WIO_KEY_A, INPUT_PULLUP);
-  pinMode(WIO_KEY_B, INPUT_PULLUP);
-  pinMode(WIO_KEY_C, INPUT_PULLUP);
-  pinMode(WIO_5S_UP, INPUT_PULLUP);
-  pinMode(WIO_5S_DOWN, INPUT_PULLUP);
-  pinMode(WIO_5S_LEFT, INPUT_PULLUP);
-  pinMode(WIO_5S_RIGHT, INPUT_PULLUP);
-  pinMode(WIO_5S_PRESS, INPUT_PULLUP);
-
-  // 蜂鸣器
-  pinMode(WIO_BUZZER, OUTPUT);
-
-  // 初始化游戏
-  memset(enemies, 0, sizeof(enemies));
-  memset(gems, 0, sizeof(gems));
-  memset(projectiles, 0, sizeof(projectiles));
-  memset(slowZones, 0, sizeof(slowZones));
-  memset(bossAoEs, 0, sizeof(bossAoEs)); bossAoECount = 0;
-  enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0;
-  gameTime = 0; killCount = 0;
-  upgrading = false; gameOver = false;
-
-  initPlayer();
-  rngState = micros();
-  updateCamera();
-
-  lastFrameTime = millis();
-
-  // ===== 启动画面 =====
+// ==================== 主菜单/启动画面 ====================
+void runSplashScreen() {
   tft.fillScreen(0x0000);
 
   // 底部草地
@@ -162,6 +122,49 @@ void setup() {
   beep(600, 100);
 }
 
+// ==================== Arduino Setup ====================
+void setup() {
+  // 背光
+  pinMode(LCD_BACKLIGHT, OUTPUT);
+  digitalWrite(LCD_BACKLIGHT, HIGH);
+
+  // 初始化屏幕
+  tft.begin();
+  tft.setRotation(3);
+  tft.fillScreen(TFT_BLACK);
+  gameSpr.createSprite(SW, SH);
+
+  // 初始化按钮
+  pinMode(WIO_KEY_A, INPUT_PULLUP);
+  pinMode(WIO_KEY_B, INPUT_PULLUP);
+  pinMode(WIO_KEY_C, INPUT_PULLUP);
+  pinMode(WIO_5S_UP, INPUT_PULLUP);
+  pinMode(WIO_5S_DOWN, INPUT_PULLUP);
+  pinMode(WIO_5S_LEFT, INPUT_PULLUP);
+  pinMode(WIO_5S_RIGHT, INPUT_PULLUP);
+  pinMode(WIO_5S_PRESS, INPUT_PULLUP);
+
+  // 蜂鸣器
+  pinMode(WIO_BUZZER, OUTPUT);
+
+  // 初始化游戏
+  memset(enemies, 0, sizeof(enemies));
+  memset(gems, 0, sizeof(gems));
+  memset(projectiles, 0, sizeof(projectiles));
+  memset(slowZones, 0, sizeof(slowZones));
+  memset(bossAoEs, 0, sizeof(bossAoEs)); bossAoECount = 0;
+  enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0;
+  gameTime = 0; killCount = 0;
+  upgrading = false; gameOver = false;
+
+  initPlayer();
+  rngState = micros();
+  updateCamera();
+
+  lastFrameTime = millis();
+  inMenu = true;
+}
+
 // ==================== Arduino Loop ====================
 void loop() {
   unsigned long now = millis();
@@ -191,6 +194,26 @@ void loop() {
     return;
   }
 
+  // 主菜单
+  if (inMenu) {
+    runSplashScreen();
+    memset(enemies, 0, sizeof(enemies));
+    memset(gems, 0, sizeof(gems));
+    memset(projectiles, 0, sizeof(projectiles));
+    memset(slowZones, 0, sizeof(slowZones));
+    memset(bossAoEs, 0, sizeof(bossAoEs)); bossAoECount = 0;
+    enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0;
+    gameTime = 0; killCount = 0;
+    upgrading = false; gameOver = false; gameWon = false;
+    bossActive = false; bossAttackTimer = 0; paused = false;
+    inMenu = false;
+    initPlayer();
+    rngState = micros();
+    lastFrameTime = millis();
+    tft.fillScreen(0x0000);
+    return;
+  }
+
   // 游戏结束画面
   static uint8_t lastScreen = 0;
 
@@ -199,20 +222,8 @@ void loop() {
     drawVictoryScreen();
     if (digitalRead(WIO_KEY_A) == LOW) {
       delay(200);
-      memset(enemies, 0, sizeof(enemies));
-      memset(gems, 0, sizeof(gems));
-      memset(projectiles, 0, sizeof(projectiles));
-      memset(slowZones, 0, sizeof(slowZones));
-      memset(bossAoEs, 0, sizeof(bossAoEs)); bossAoECount = 0;
-      enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0;
-      gameTime = 0; killCount = 0;
-      upgrading = false; gameOver = false; gameWon = false;
-      bossActive = false; bossAttackTimer = 0; paused = false;
+      inMenu = true;
       lastScreen = 0;
-      initPlayer();
-      rngState = micros();
-      lastFrameTime = millis();
-      tft.fillScreen(0x0000);
     }
     return;
   }
@@ -222,19 +233,8 @@ void loop() {
     drawGameOverScreen();
     if (digitalRead(WIO_KEY_A) == LOW) {
       delay(200);
-      memset(enemies, 0, sizeof(enemies));
-      memset(gems, 0, sizeof(gems));
-      memset(projectiles, 0, sizeof(projectiles));
-      memset(slowZones, 0, sizeof(slowZones));
-      memset(bossAoEs, 0, sizeof(bossAoEs)); bossAoECount = 0;
-      enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0;
-      gameTime = 0; killCount = 0;
-      upgrading = false; gameOver = false; gameWon = false; bossActive = false; bossAttackTimer = 0;
-      paused = false; lastScreen = 0;
-      initPlayer();
-      rngState = micros();
-      lastFrameTime = millis();
-      tft.fillScreen(0x0000);
+      inMenu = true;
+      lastScreen = 0;
     }
     return;
   }
