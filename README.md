@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.bilibili.com/video/BV1HMu26dEA5/">Wio Terminal | 割草幸存者 (Weed Survivor)</a>
+  <a href="https://www.bilibili.com/video/BV1HMu26dEA5/">B站视频：Wio Terminal | 割草幸存者 (Weed Survivor)</a>
 </p>
 
 ## 游戏特性
