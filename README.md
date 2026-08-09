@@ -6,6 +6,10 @@
   <img src="docs/view.png" width="80%" />
 </p>
 
+<p align="center">
+  <a href="https://www.bilibili.com/video/BV1HMu26dEA5/">Wio Terminal | 割草幸存者 (Weed Survivor)</a>
+</p>
+
 ## 游戏特性
 
 - 🎮 **完整游戏循环**：开始画面 → 战斗 → 升级选择 → BOSS 战 → 通关/Victory
