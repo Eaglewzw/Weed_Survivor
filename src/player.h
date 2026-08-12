@@ -17,7 +17,6 @@ const char* getEvolveName(uint8_t weaponId);
 
 // ==================== 被动数据 ====================
 uint8_t getPassiveMaxLevel(uint8_t passiveId);
-float getPassivePerLevel(uint8_t passiveId);
 
 // ==================== 查找 ====================
 int8_t findWeapon(uint8_t weaponId);
@@ -34,6 +33,6 @@ bool evolveWeapon(uint8_t weaponId);
 
 // ==================== 升级系统 ====================
 void generateUpgrades();
-void applyUpgrade(uint8_t index);
+bool applyUpgrade(uint8_t index);
 
 #endif

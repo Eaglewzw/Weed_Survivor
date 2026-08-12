@@ -12,10 +12,12 @@
 #include "src/game.h"
 #include "src/render.h"
 #include "src/ui.h"
+#include "src/effects.h"
 
 // ==================== 主菜单/启动画面 ====================
 void runSplashScreen() {
   tft.fillScreen(0x0000);
+  musicPlay(MUSIC_MENU);
 
   // 底部草地
   for (int i = 0; i < 30; i++) {
@@ -116,6 +118,7 @@ void runSplashScreen() {
       }
     }
 
+    audioTick();
     delay(30);
   }
   delay(200);
@@ -153,8 +156,14 @@ void setup() {
   memset(projectiles, 0, sizeof(projectiles));
   memset(slowZones, 0, sizeof(slowZones));
   memset(bossAoEs, 0, sizeof(bossAoEs)); bossAoECount = 0;
-  enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0;
+  memset(particles, 0, sizeof(particles));
+  memset(floaters, 0, sizeof(floaters));
+  memset(chests, 0, sizeof(chests));
+  enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0; chestCount = 0;
   gameTime = 0; killCount = 0;
+  comboCount = 0; comboTimer = 0;
+  memset(killStats, 0, sizeof(killStats));
+  totalDamageDealt = 0; bossBannerTimer = 0; heartbeatTimer = 0;
   upgrading = false; gameOver = false;
 
   initPlayer();
@@ -168,22 +177,25 @@ void setup() {
 // ==================== Arduino Loop ====================
 void loop() {
   unsigned long now = millis();
+  audioTick();
   float dt = (now - lastFrameTime) / 1000.0f;
   if (dt > 0.1f) dt = 0.1f;
   if (dt <= 0) dt = 0.016f;
   lastFrameTime = now;
 
-  // 暂停/继续 (C键)
+  // 暂停/继续 (C键)，升级面板中 C 用于选择选项3
   static bool cPressed = false;
   bool cNow = (digitalRead(WIO_KEY_C) == LOW);
   if (cNow && !cPressed) {
-    if (!paused) {
-      paused = true;
-      beep(600, 50);
-    } else {
-      paused = false;
-      lastFrameTime = millis();
-      beep(800, 50);
+    if (!upgrading) {
+      if (!paused) {
+        paused = true;
+        beep(600, 50);
+      } else {
+        paused = false;
+        lastFrameTime = millis();
+        beep(800, 50);
+      }
     }
   }
   cPressed = cNow;
@@ -202,14 +214,21 @@ void loop() {
     memset(projectiles, 0, sizeof(projectiles));
     memset(slowZones, 0, sizeof(slowZones));
     memset(bossAoEs, 0, sizeof(bossAoEs)); bossAoECount = 0;
-    enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0;
+    memset(particles, 0, sizeof(particles));
+    memset(floaters, 0, sizeof(floaters));
+    memset(chests, 0, sizeof(chests));
+    enemyCount = 0; gemCount = 0; projectileCount = 0; slowZoneCount = 0; chestCount = 0;
     gameTime = 0; killCount = 0;
+    comboCount = 0; comboTimer = 0;
+    memset(killStats, 0, sizeof(killStats));
+    totalDamageDealt = 0; bossBannerTimer = 0; heartbeatTimer = 0;
     upgrading = false; gameOver = false; gameWon = false;
     bossActive = false; bossAttackTimer = 0; paused = false;
     inMenu = false;
     initPlayer();
     rngState = micros();
     lastFrameTime = millis();
+    musicStop();
     tft.fillScreen(0x0000);
     return;
   }
@@ -241,9 +260,12 @@ void loop() {
 
   // 升级面板
   if (upgrading) {
-    static bool upPrev = false, downPrev = false;
+    static bool upPrev = false, downPrev = false, aPrev = false, bPrev = false, cPrev = false;
     bool upNow = (digitalRead(WIO_5S_UP) == LOW);
     bool downNow = (digitalRead(WIO_5S_DOWN) == LOW);
+    bool aNow = (digitalRead(WIO_KEY_A) == LOW);
+    bool bNow = (digitalRead(WIO_KEY_B) == LOW);
+    bool cNow2 = (digitalRead(WIO_KEY_C) == LOW);
     if (upNow && !upPrev) {
       upgradeSelection--;
       if (upgradeSelection < 0) upgradeSelection = upgradeOptionCount - 1;
@@ -258,12 +280,25 @@ void loop() {
     }
     upPrev = upNow; downPrev = downNow;
 
-    drawUpgradePanel();
-    gameSpr.pushSprite(0, 0);
+    // A/B/C 直接选择对应选项
+    bool confirmed = false;
+    if (aNow && !aPrev) confirmed = applyUpgrade(0);
+    if (!confirmed && bNow && !bPrev) confirmed = applyUpgrade(1);
+    if (!confirmed && cNow2 && !cPrev) confirmed = applyUpgrade(2);
+    aPrev = aNow; bPrev = bNow; cPrev = cNow2;
 
-    if (digitalRead(WIO_5S_PRESS) == LOW) {
-      applyUpgrade(upgradeSelection);
+    // 摇杆按下确认当前高亮选项
+    if (!confirmed && digitalRead(WIO_5S_PRESS) == LOW) confirmed = applyUpgrade(upgradeSelection);
+
+    if (confirmed) {
+      beep(700, 50);
       delay(200);
+    }
+
+    if (upgradeDirty) {
+      drawUpgradePanel();
+      gameSpr.pushSprite(0, 0);
+      upgradeDirty = false;
     }
     return;
   }
@@ -283,11 +318,15 @@ void loop() {
   drawSlowZones();
   for (int i = 0; i < MAX_GEMS; i++) if (gems[i].life > 0) drawGem(i);
   for (int i = 0; i < MAX_ENEMIES; i++) if (enemies[i].alive) drawEnemy(i);
+  for (int i = 0; i < MAX_CHESTS; i++) if (chests[i].alive) drawChest(i);
   for (int i = 0; i < MAX_BOSS_AOE; i++) if (bossAoEs[i].active) drawBossAoE(i);
   for (int i = 0; i < MAX_PROJECTILES; i++) if (projectiles[i].alive) drawProjectile(i);
+  drawEffects();
   drawScythe();
   drawAura();
   drawPlayer();
   drawUI();
+  drawLowHpVignette();
+  drawBossBanner();
   gameSpr.pushSprite(0, 0);
 }

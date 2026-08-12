@@ -22,6 +22,9 @@
 #define MAX_PASSIVES     5
 #define MAX_BOSS_AOE     12
 #define MAX_SLOW_ZONES   8
+#define MAX_PARTICLES    64
+#define MAX_FLOATERS     16
+#define MAX_CHESTS       6
 
 // ==================== 玩家参数 ====================
 #define PLAYER_RADIUS    6

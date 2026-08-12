@@ -8,6 +8,7 @@ void drawBackground();
 void drawPlayer();
 void drawEnemy(int idx);
 void drawGem(int idx);
+void drawChest(int idx);
 void drawProjectile(int idx);
 void drawScythe();
 void drawAura();

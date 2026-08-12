@@ -4,6 +4,10 @@
 #include "audio.h"
 #include "player.h"
 #include "enemy.h"
+#include "effects.h"
+
+static int gemStreak = 0;
+static float gemStreakTimer = 0;
 
 // ==================== 投射物槽位 ====================
 int findFreeProjectileSlot() {
@@ -13,7 +17,7 @@ int findFreeProjectileSlot() {
   return -1;
 }
 
-void fireProjectile(float x, float y, float angle, float speed, float damage, int8_t pierce, float range) {
+void fireProjectile(float x, float y, float angle, float speed, float damage, int8_t pierce, float range, bool isEnemy) {
   int slot = findFreeProjectileSlot();
   if (slot < 0) return;
   Projectile& p = projectiles[slot];
@@ -25,7 +29,8 @@ void fireProjectile(float x, float y, float angle, float speed, float damage, in
   p.traveled = 0;
   p.maxRange = range;
   p.alive = true;
-  p.hitMask = 0;
+  p.isEnemy = isEnemy;
+  memset(p.hitMask, 0, sizeof(p.hitMask));
   projectileCount++;
 }
 
@@ -36,17 +41,30 @@ void damageEnemy(int idx, float damage) {
   float armor = (e.type == ENEMY_THORN) ? 0.15f : (e.type == ENEMY_ELITE) ? 0.2f : (e.type == ENEMY_BOSS) ? 0.4f : 0;
   float actual = damage * (1.0f - armor);
   e.hp -= actual;
+  totalDamageDealt += actual;
   if (e.hp <= 0) {
     e.alive = false;
     enemyCount--;
     killCount++;
+    killStats[e.type]++;
+    comboCount++;
+    comboTimer = 2.0f;
+    spawnDeathBurst(e.x, e.y, e.type);
+    spawnFloater(e.x, e.y, (uint16_t)actual);
     if (e.type == ENEMY_BOSS) {
       bossActive = false;
       gameWon = true;
+      musicStop();
       soundEvolve();
     } else {
       spawnGem(e.x, e.y, e.xpValue);
-      soundKill();
+      soundKill(comboCount);
+      if (e.type == ENEMY_ELITE && rngFloat() < 0.35f) spawnChest(e.x, e.y);
+    }
+  } else {
+    e.hitFlash = 3;
+    if (damage >= 20.0f && rngFloat() < 0.15f) {
+      spawnFloater(e.x, e.y, (uint16_t)actual);
     }
   }
 }
@@ -69,11 +87,26 @@ void spawnGem(float x, float y, uint8_t value) {
   gemCount++;
 }
 
+// ==================== 宝箱 ====================
+void spawnChest(float x, float y) {
+  if (chestCount >= MAX_CHESTS) return;
+  for (int i = 0; i < MAX_CHESTS; i++) {
+    if (chests[i].alive) continue;
+    chests[i].x = x;
+    chests[i].y = y;
+    chests[i].alive = true;
+    chests[i].life = 30.0f;
+    chestCount++;
+    return;
+  }
+}
+
 // ==================== 主游戏更新 ====================
 void updateGame(float dt) {
   if (gameOver || upgrading) return;
 
   gameTime += dt;
+  if (bossBannerTimer > 0) bossBannerTimer -= dt;
 
   // ===== 玩家移动 =====
   float dx = 0, dy = 0;
@@ -119,6 +152,18 @@ void updateGame(float dt) {
   // 无敌计时
   if (player.invincibleTimer > 0) player.invincibleTimer -= dt;
 
+  // ===== 低血心跳 =====
+  float hpRatio = player.hp / player.maxHp;
+  if (hpRatio < 0.3f) {
+    heartbeatTimer += dt;
+    if (heartbeatTimer >= 1.1f) {
+      heartbeatTimer = 0;
+      soundHeartbeat();
+    }
+  } else {
+    heartbeatTimer = 0;
+  }
+
   // 生命恢复
   if (player.regen > 0 && player.hp < player.maxHp) {
     player.hp += player.regen * dt;
@@ -151,6 +196,7 @@ void updateGame(float dt) {
   for (int i = 0; i < MAX_ENEMIES; i++) {
     if (!enemies[i].alive) continue;
     Enemy& e = enemies[i];
+    if (e.hitFlash > 0) e.hitFlash--;
     float a = angleTo(e.x, e.y, player.x, player.y);
     float spd = e.speed;
     for (int j = 0; j < slowZoneCount; j++) {
@@ -190,7 +236,7 @@ void updateGame(float dt) {
       if (aoe.active && aoe.type != 2) {
         float d = distF(player.x, player.y, aoe.x, aoe.y);
         if (d < aoe.radius + PLAYER_RADIUS) {
-          hurtPlayer(500);
+          hurtPlayer(player.maxHp * 0.3f);
         }
       }
     }
@@ -293,7 +339,7 @@ void updateGame(float dt) {
           int count = (int)w.extraParam;
           for (int c = 0; c < count; c++) {
             float spread = (count > 1) ? (c - (count - 1) * 0.5f) * 0.15f : 0;
-            fireProjectile(player.x, player.y, a + spread, 350, w.damage * player.damageMult, (int8_t)w.extraParam2, 500);
+            fireProjectile(player.x, player.y, a + spread, 350, w.damage * player.damageMult, (int8_t)w.extraParam2, 500, false);
           }
           soundShoot();
           playerAttackFlash = 0.12f;
@@ -352,10 +398,10 @@ void updateGame(float dt) {
     }
     for (int j = 0; j < MAX_ENEMIES; j++) {
       if (!enemies[j].alive) continue;
-      if (p.hitMask & (1 << (j % 8))) continue;
+      if (p.hitMask[j >> 5] & (1UL << (j & 31))) continue;
       if (distF(p.x, p.y, enemies[j].x, enemies[j].y) < 10) {
         damageEnemy(j, p.damage);
-        p.hitMask |= (1 << (j % 8));
+        p.hitMask[j >> 5] |= (1UL << (j & 31));
         if (p.pierce == 0) {
           p.alive = false; projectileCount--; break;
         } else if (p.pierce > 0) {
@@ -371,19 +417,20 @@ void updateGame(float dt) {
     if (!enemies[i].alive) continue;
     Enemy& e = enemies[i];
     if (distF(player.x, player.y, e.x, e.y) < PLAYER_RADIUS + 8) {
+      hurtPlayer(e.damage);
       if (e.type == ENEMY_BOSS) {
-        player.hp = 0;
-        gameOver = true;
-        soundHurt();
-      } else {
-        hurtPlayer(e.damage);
+        float ka = angleTo(e.x, e.y, player.x, player.y);
+        player.x += cosf(ka) * 55.0f;
+        player.y += sinf(ka) * 55.0f;
+        player.x = clampF(player.x, PLAYER_RADIUS, WORLD_W - PLAYER_RADIUS);
+        player.y = clampF(player.y, PLAYER_RADIUS, WORLD_H - PLAYER_RADIUS);
       }
     }
   }
 
   // BOSS弹幕碰撞玩家
   for (int i = 0; i < MAX_PROJECTILES; i++) {
-    if (!projectiles[i].alive) continue;
+    if (!projectiles[i].alive || !projectiles[i].isEnemy) continue;
     if (distF(player.x, player.y, projectiles[i].x, projectiles[i].y) < 10) {
       hurtPlayer(projectiles[i].damage);
       projectiles[i].alive = false;
@@ -406,6 +453,41 @@ void updateGame(float dt) {
       addExp(gems[i].value);
       gems[i].life = 0;
       gemCount--;
+      gemStreak++;
+      gemStreakTimer = 0.6f;
+      soundGem(gemStreak);
     }
   }
+
+  if (gemStreakTimer > 0) {
+    gemStreakTimer -= dt;
+    if (gemStreakTimer <= 0) gemStreak = 0;
+  }
+
+  // ===== 更新宝箱 =====
+  for (int i = 0; i < MAX_CHESTS; i++) {
+    if (!chests[i].alive) continue;
+    chests[i].life -= dt;
+    if (chests[i].life <= 0) { chests[i].alive = false; chestCount--; continue; }
+    if (distF(player.x, player.y, chests[i].x, chests[i].y) < PLAYER_RADIUS + 10) {
+      chests[i].alive = false;
+      chestCount--;
+      soundEvolve();
+      generateUpgrades();
+      if (upgradeOptionCount > 0) {
+        upgrading = true;
+        upgradeDirty = true;
+        upgradeSelection = 0;
+      } else {
+        player.hp = player.maxHp;  // 无可选升级时回满血
+      }
+    }
+  }
+
+  if (comboTimer > 0) {
+    comboTimer -= dt;
+    if (comboTimer <= 0) comboCount = 0;
+  }
+
+  updateEffects(dt);
 }

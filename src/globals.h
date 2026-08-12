@@ -14,16 +14,26 @@ extern Gem gems[MAX_GEMS];
 extern Projectile projectiles[MAX_PROJECTILES];
 extern SlowZone slowZones[MAX_SLOW_ZONES];
 extern BossAoE bossAoEs[MAX_BOSS_AOE];
+extern Particle particles[MAX_PARTICLES];
+extern Floater floaters[MAX_FLOATERS];
+extern Chest chests[MAX_CHESTS];
 
 extern int enemyCount;
 extern int gemCount;
 extern int projectileCount;
 extern int slowZoneCount;
 extern uint8_t bossAoECount;
+extern uint8_t chestCount;
 
 extern float gameTime;
 extern int killCount;
+extern int comboCount;
+extern float comboTimer;
 extern unsigned long lastFrameTime;
+extern uint16_t killStats[5];
+extern float totalDamageDealt;
+extern float bossBannerTimer;
+extern float heartbeatTimer;
 
 extern bool upgrading;
 extern bool upgradeDirty;

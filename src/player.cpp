@@ -49,6 +49,7 @@ void hurtPlayer(float damage) {
   if (player.hp <= 0) {
     player.hp = 0;
     gameOver = true;
+    musicStop();
   }
 }
 
@@ -115,11 +116,6 @@ const char* getEvolveName(uint8_t weaponId) {
 
 // ==================== 被动数据 ====================
 uint8_t getPassiveMaxLevel(uint8_t passiveId) { return 5; }
-
-float getPassivePerLevel(uint8_t passiveId) {
-  const float vals[] = {0.20f, 0.15f, 0.15f, 30.0f, 0.15f};
-  return vals[passiveId];
-}
 
 // ==================== 查找武器/被动 ====================
 int8_t findWeapon(uint8_t weaponId) {
@@ -336,8 +332,8 @@ void generateUpgrades() {
   }
 }
 
-void applyUpgrade(uint8_t index) {
-  if (index >= upgradeOptionCount) return;
+bool applyUpgrade(uint8_t index) {
+  if (index >= upgradeOptionCount) return false;
   UpgradeOption& opt = upgradeOptions[index];
   switch (opt.type) {
     case 0: upgradeWeapon(opt.id); break;
@@ -350,4 +346,5 @@ void applyUpgrade(uint8_t index) {
   }
   recalcStats();
   upgrading = false;
+  return true;
 }

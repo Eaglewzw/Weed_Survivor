@@ -23,6 +23,7 @@ struct Enemy {
   uint8_t type;
   bool alive;
   uint8_t xpValue;
+  uint8_t hitFlash;
 };
 
 struct Gem {
@@ -39,7 +40,8 @@ struct Projectile {
   float traveled;
   float maxRange;
   bool alive;
-  uint8_t hitMask;
+  bool isEnemy;
+  uint32_t hitMask[4];
 };
 
 struct WeaponState {
@@ -102,6 +104,25 @@ struct Candidate {
   uint8_t type;
   uint8_t id;
   int priority;
+};
+
+struct Particle {
+  float x, y;
+  float vx, vy;
+  float life, maxLife;
+  uint16_t color;
+};
+
+struct Floater {
+  float x, y;
+  float life;
+  uint16_t value;
+};
+
+struct Chest {
+  float x, y;
+  bool alive;
+  float life;
 };
 
 #endif

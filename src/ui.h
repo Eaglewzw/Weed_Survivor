@@ -8,5 +8,7 @@ void drawUpgradePanel();
 void drawPauseOverlay();
 void drawVictoryScreen();
 void drawGameOverScreen();
+void drawLowHpVignette();
+void drawBossBanner();
 
 #endif

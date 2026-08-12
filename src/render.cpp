@@ -510,6 +510,12 @@ void drawEnemy(int idx) {
     }
   }
 
+  // ===== 受击白闪 =====
+  if (e.hitFlash > 0) {
+    gameSpr.drawCircle(ex, ey, r + 1, 0xFFFF);
+    gameSpr.drawCircle(ex, ey, r + 2, 0xFFFF);
+  }
+
   // ===== 血量条（世界空间偏移） =====
   if (e.hp < e.maxHp) {
     float ratio = e.hp / e.maxHp;
@@ -522,36 +528,70 @@ void drawEnemy(int idx) {
   }
 }
 
-// ==================== 经验宝石 ====================
+// ==================== 经验宝石（蓝色 3D 水晶） ====================
 void drawGem(int idx) {
   Gem& g = gems[idx];
   if (g.life <= 0) return;
   int gx = toScreenX(g.x), gy = toScreenY(g.y);
-  float alpha = (g.life < 3) ? g.life / 3.0f : 1.0f;
-  if (alpha <= 0) return;
+  if (g.life < 3.0f && ((int)(g.life * 10.0f) % 2 == 0)) return;
   int r = 3 + g.value / 5;
   if (r > 6) r = 6;
-  gameSpr.fillCircle(gx, gy, r + 2, 0x06A0);
-  gameSpr.fillCircle(gx, gy, r, 0x0FC0);
+  bool big = (g.value >= 20);
+  int w = r, h = r + 2;
+  // 六边形切面：顶面最亮、左面中亮、右面暗 → 3D 立体感
+  gameSpr.fillTriangle(gx, gy - h, gx - w, gy - h / 2, gx + w, gy - h / 2, 0x9FFF);
+  gameSpr.fillTriangle(gx - w, gy - h / 2, gx - w, gy + h / 2, gx, gy + h, 0x05BF);
+  gameSpr.fillTriangle(gx, gy + h, gx + w, gy + h / 2, gx + w, gy - h / 2, 0x039F);
+  // 顶部高光
+  gameSpr.drawPixel(gx - 1, gy - 2, 0xFFFF);
+  // 交替闪烁星光
+  if (((int)(gameTime * 4.0f)) % 2 == 0) {
+    gameSpr.drawPixel(gx - 2, gy - h + 1, 0xFFFF);
+  } else {
+    gameSpr.drawPixel(gx + 2, gy + h - 2, 0xFFFF);
+  }
+  // 大额宝石额外高光
+  if (big) gameSpr.drawPixel(gx, gy + 1, 0xFFFF);
+}
+
+// ==================== 宝箱 ====================
+void drawChest(int idx) {
+  Chest& c = chests[idx];
+  if (!c.alive) return;
+  if (c.life < 3.0f && ((int)(c.life * 8.0f) % 2 == 0)) return;  // 快消失时闪烁
+  int cx = toScreenX(c.x), cy = toScreenY(c.y);
+  // 金色宝箱：盖 + 箱体 + 金边 + 锁
+  gameSpr.fillRect(cx - 6, cy - 6, 12, 4, 0x8C60);
+  gameSpr.fillRect(cx - 6, cy - 2, 12, 9, 0x7A40);
+  gameSpr.drawRect(cx - 6, cy - 6, 12, 13, 0x8C60);
+  gameSpr.fillRect(cx - 1, cy - 5, 2, 12, 0xFCC0);
+  gameSpr.fillRect(cx - 2, cy - 2, 4, 3, 0xF800);
 }
 
 // ==================== 投射物 ====================
 void drawProjectile(int idx) {
   Projectile& p = projectiles[idx];
   int px = toScreenX(p.x), py = toScreenY(p.y);
-  // BOSS弹幕 — 红色大光球 + 拖尾
-  if (p.damage >= 25) {
-    gameSpr.fillCircle(px, py, 6, 0xC800);
-    gameSpr.fillCircle(px, py, 4, 0xF800);
-    gameSpr.fillCircle(px, py, 2, 0xFD20);
+  if (p.isEnemy) {
+    // BOSS弹幕 — 品红色大光球 + 拖尾（与玩家红色弹区分）
+    gameSpr.fillCircle(px, py, 6, 0x9018);
+    gameSpr.fillCircle(px, py, 4, 0xC818);
+    gameSpr.fillCircle(px, py, 2, 0xFD3C);
     float tailA = atan2f(p.vy, p.vx) + 3.1416f;
     int tx = px + cosf(tailA) * 5, ty = py + sinf(tailA) * 5;
-    gameSpr.fillCircle(tx, ty, 3, 0xC800);
-    gameSpr.fillCircle(tx, ty, 2, 0xF800);
+    gameSpr.fillCircle(tx, ty, 3, 0x9018);
+    gameSpr.fillCircle(tx, ty, 2, 0xC818);
   } else {
-    // 玩家投射物 — 绿色叶片
-    gameSpr.fillCircle(px, py, 3, 0x04A0);
-    gameSpr.fillCircle(px, py, 2, 0x06C0);
+    // 玩家叶片 — 红色 + 白描边 + 运动拖尾
+    float ang = atan2f(p.vy, p.vx);
+    int tx1 = px - (int)(cosf(ang) * 4), ty1 = py - (int)(sinf(ang) * 4);
+    int tx2 = px - (int)(cosf(ang) * 7), ty2 = py - (int)(sinf(ang) * 7);
+    gameSpr.fillCircle(tx2, ty2, 1, 0x6000);
+    gameSpr.fillCircle(tx1, ty1, 2, 0xA000);
+    gameSpr.fillCircle(px, py, 3, 0xD000);
+    gameSpr.fillCircle(px, py, 2, 0xF800);
+    gameSpr.drawCircle(px, py, 3, 0xFFFF);
+    gameSpr.drawPixel(px + (int)(cosf(ang) * 2), py + (int)(sinf(ang) * 2), 0xFFFF);
   }
 }
 

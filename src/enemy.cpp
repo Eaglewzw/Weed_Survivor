@@ -51,7 +51,8 @@ void bossProjectile(int8_t bossIdx, float angle, float speed) {
   p.pierce = 0;
   p.traveled = 0;
   p.maxRange = 300;
-  p.hitMask = 0;
+  p.isEnemy = true;
+  memset(p.hitMask, 0, sizeof(p.hitMask));
   projectileCount++;
 }
 
@@ -137,10 +138,12 @@ void spawnBoss() {
   e.hp = player.maxHp * 1000.0f;
   e.maxHp = e.hp;
   e.speed = 8;
-  e.damage = 300;
+  e.damage = 60;
   e.xpValue = 0;
   bossActive = true;
   bossAttackTimer = 3.0f;
   enemyCount++;
+  bossBannerTimer = 2.5f;
+  soundBossRoar();
   soundEvolve();
 }
